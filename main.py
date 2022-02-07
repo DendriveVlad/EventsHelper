@@ -17,6 +17,13 @@ db = DB()
 class Bot(commands.Bot):
     async def on_ready(self):
         DiscordComponents(self)
+        for member in self.get_guild(GUILD_ID).members:
+            if not db.select("members", f"id == {member.id}"):
+                db.insert("members", id=member.id, date_connection=time())
+
+    async def on_member_join(self, member):
+        if not db.select("members", f"id == {member.id}"):
+            db.insert("members", id=member.id, date_connection=time())
 
 
 client = Bot(command_prefix="/", intents=Intents.all())
