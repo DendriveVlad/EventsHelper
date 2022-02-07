@@ -2,9 +2,8 @@ import os
 from asyncio import sleep
 from time import time
 
-from discord import *
-from discord_components import DiscordComponents
-from discord.ext import tasks, commands
+from nextcord import *
+from nextcord.ext import tasks, commands
 
 from DataBase import DB
 from config import *
@@ -16,7 +15,6 @@ db = DB()
 
 class Bot(commands.Bot):
     async def on_ready(self):
-        DiscordComponents(self)
         for member in self.get_guild(GUILD_ID).members:
             if not db.select("members", f"id == {member.id}"):
                 db.insert("members", id=member.id, date_connection=time())
