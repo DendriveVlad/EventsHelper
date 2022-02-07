@@ -10,7 +10,7 @@ class CMD(commands.Cog):
         self.client = bot
 
     @slash_command(name="create", description="Создать ивент", guild_ids=[GUILD_ID])
-    async def ping(self, interaction: Interaction, event_name):
+    async def create(self, interaction: Interaction, event_name):
         await interaction.response.send_message("Ивент будет создан")
 
     @slash_command(name="hello", description="said you hi", guild_ids=[GUILD_ID])
