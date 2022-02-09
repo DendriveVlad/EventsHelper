@@ -13,6 +13,7 @@ class DB:
         self.md = sql.MetaData()  # Метаданные
         self.members = sql.Table('members', self.md, autoload=True, autoload_with=self.engine)
         self.events = sql.Table('events', self.md, autoload=True, autoload_with=self.engine)
+        self.bot_todo = sql.Table('bot_todo', self.md, autoload=True, autoload_with=self.engine)
         self.last_start = int(time())
 
     # date(where): "name == value" or "", column: (name1, name2...) or name
@@ -72,6 +73,4 @@ class DB:
 
 if __name__ == "__main__":
     db = DB()
-    db.delete("events", "name == 'Фильм Алибаба 18+'")
-    a = db.select("events")
-    print(a)
+    db.update("members", f"id == 280536559403532290", organizer=1)
