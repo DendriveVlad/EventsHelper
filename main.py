@@ -1,6 +1,6 @@
 import os
 from asyncio import sleep
-from time import time
+from time import time, ctime
 
 from nextcord import *
 from nextcord.ext import tasks, commands
@@ -23,6 +23,41 @@ class Bot(commands.Bot):
     async def on_member_join(self, member):
         if not db.select("members", f"id == {member.id}"):
             db.insert("members", id=member.id, date_connection=time())
+
+    @tasks.loop(seconds=60)
+    async def check_event(self):
+        channel = utils.get(self.get_guild(GUILD_ID).channels, id=CHANNELS["Schedule"])
+        if ctime()[0:3] not in ("Sat", "Sun"):
+            if ctime()[0:3] == "Mon" and db.select("bot_todo", "bot == 0", "events_list")["events_list"]:
+                await channel.purge()
+                await channel.send("Сегодня ничего нет")
+                db.update("bot_todo", "bot == 0", events_list=0)
+            return
+        if ctime()[0:3] == "Sat" and not db.select("bot_todo", "bot == 0", "events_list")["events_list"]:
+            db.update("bot_todo", "bot == 0", events_list=1)
+            sat = ["Расписание на Субботу:"]
+            sun = ["Расписание на Воскресенье:"]
+            events = db.select("events")
+            events.sort(key=lambda d: d["datetime"])
+            for event in events:
+                match ctime(event["datetime"])[0:3]:
+                    case "Sat":
+                        sat.append(f"{event['name']} пройдёт <t:{event['datetime']}>\nОрганизатор: <@{event['organizer']}>")
+                    case "Sun":
+                        sun.append(f"{event['name']} пройдёт <t:{event['datetime']}>\nОрганизатор: <@{event['organizer']}>")
+            await channel.purge()
+            await channel.send(embed=Embed(title=sat[0], description="\n\n".join(sat[1::]), colour=0xF9BA1C))
+            await channel.send(embed=Embed(title=sun[0], description="\n\n".join(sun[1::]), colour=0xF9BA1C))
+        for event in db.select("events"):
+            if int(time()) - event["datetime"] <= 600 and not event["mention"]:
+                m = await channel.send(f"@everyone \nЧерез <t:{event['datetime']}:R> будет проходить ивент: \"{event['name']}\" от <@{event['organizer']}>")
+                db.update("events", f"name == {event['name']}", mention=m.id)
+            elif int(time()) - event["datetime"] < 30:
+                fm = await channel.fetch_message(event["mention"])
+                await fm.delete()
+                m = await channel.send(f"@everyone \nУже совсем скоро начнётся ивент: \"{event['name']}\" от <@{event['organizer']}>")
+                voice = await self.get_guild(GUILD_ID).create_voice_channel(name=event["name"], category=utils.get(self.get_guild(GUILD_ID).categories, id=EVENTS_CATEGORY))
+                db.update("events", f"name == {event['name']}", mention=m.id, voice_channel=voice)
 
 
 client = Bot(command_prefix="/", intents=Intents.all())
