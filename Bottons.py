@@ -1,4 +1,4 @@
-from nextcord import ButtonStyle, Embed
+from nextcord import ButtonStyle, Embed, Interaction, Message
 from nextcord.ui import View, button
 
 
@@ -186,3 +186,23 @@ class EventRemoveAccept(View):
         self.accept = False
         await interaction.response.send_message(embed=Embed(title="Команда отозвана"), ephemeral=True)
         self.stop()
+
+
+class Voting(View):
+    def __init__(self, need_accept, creator, message):
+        super().__init__()
+        self.message = message
+        self.creator = creator
+        self.accepted = [creator.id]
+        self.max = need_accept if need_accept <= 5 else 5
+        self.accept_count = 1
+
+    @button(label="Проголосовать", style=ButtonStyle.green, emoji="✅")
+    async def accept(self, button, interaction: Interaction):
+        if interaction.user.id not in self.accepted:
+            self.accepted.append(interaction.user.id)
+            self.accept_count += 1
+            await interaction.message.edit(content=f"{self.message} ({self.accept_count}/{self.max})")
+            if self.accept_count >= self.max:
+                await interaction.message.delete()
+                self.stop()
