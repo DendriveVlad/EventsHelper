@@ -1,4 +1,4 @@
-from nextcord import ButtonStyle, Embed, Interaction, Message
+from nextcord import ButtonStyle, Embed, Interaction
 from nextcord.ui import View, button
 
 
