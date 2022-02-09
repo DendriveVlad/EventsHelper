@@ -17,6 +17,10 @@ class Bot(commands.Bot):
     async def on_ready(self):
         if not self.check_event.is_running():
             self.check_event.start()
+        if not self.voice_check.is_running():
+            self.voice_check.start()
+        if not self.invites_check.is_running():
+            self.invites_check.start()
         for member in self.get_guild(GUILD_ID).members:
             if not (db.select("members", f"id == {member.id}") or member.id == MY_ID):
                 db.insert("members", id=member.id, date_connection=time())
@@ -107,6 +111,13 @@ class Bot(commands.Bot):
                 await mess.delete()
                 await mess2.delete()
                 db.delete("events", f"voice == {voice.id}")
+
+    @tasks.loop(hours=24)
+    async def invites_check(self):
+        for invite in await self.get_guild(GUILD_ID).invites():
+            if invite.uses:
+                db.update("members", f"id == {invite.inviter.id}", invites=db.select("members", f"id == {invite.inviter.id}", "invites")["invites"] + invite.uses)
+                await invite.delete()
 
 
 client = Bot(command_prefix="/", intents=Intents.all())
