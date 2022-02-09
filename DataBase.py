@@ -73,4 +73,4 @@ class DB:
 
 if __name__ == "__main__":
     db = DB()
-    db.update("members", f"id == 280536559403532290", organizer=1)
+    print(db.select("members"))
