@@ -101,7 +101,7 @@ class Bot(commands.Bot):
     @tasks.loop(minutes=10)
     async def voice_check(self):
         for voice in self.get_guild(GUILD_ID).voice_channels:
-            if voice.members:
+            if voice.members or voice.id == IGNORE_VS:
                 continue
             event = db.select("events", f"voice == {voice.id}", "datetime", "message_id", "mention")
             if int(time()) - event["datetime"] >= 1800:
