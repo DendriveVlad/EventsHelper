@@ -15,14 +15,28 @@ db = DB()
 
 class Bot(commands.Bot):
     async def on_ready(self):
+        if not self.check_event.is_running():
+            self.check_event.start()
         for member in self.get_guild(GUILD_ID).members:
             if not (db.select("members", f"id == {member.id}") or member.id == MY_ID):
                 db.insert("members", id=member.id, date_connection=time())
         print("Ready")
 
-    async def on_member_join(self, member):
-        if not db.select("members", f"id == {member.id}"):
+    async def on_member_join(self, member: Member):
+        if not (db.select("members", f"id == {member.id}") or member.id == MY_ID):
             db.insert("members", id=member.id, date_connection=time())
+
+    async def on_voice_state_update(self, member: Member, before: VoiceState, after: VoiceState):
+        if not after.channel and before.channel:
+            if db.select("members", f"id == {member.id}", "voice_time")["voice_time"] == 0:
+                return
+            if int(time()) - db.select("members", f"id == {member.id}", "voice_time")["voice_time"] >= 300:
+                db.update("members", f"id == {member.id}", voice_time=1)
+            else:
+                db.update("members", f"id == {member.id}", voice_time=0)
+        elif after.channel != before.channel:
+            if db.select("members", f"id == {member.id}", "voice_time")["voice_time"] != 1:
+                db.update("members", f"id == {member.id}", voice_time=time())
 
     @tasks.loop(seconds=60)
     async def check_event(self):
@@ -32,6 +46,12 @@ class Bot(commands.Bot):
                 await channel.purge()
                 await channel.send("Сегодня ничего нет")
                 db.update("bot_todo", "bot == 0", events_list=0)
+                for member in db.select("members"):
+                    if member["voice_text"]:
+                        db.update("members", f"id == {member.id}", voice_time=0, missed_events=0)
+                    else:
+                        db.update("members", f"id == {member.id}", missed_events=member["missed_events"] + 1)
+
             return
         if ctime()[0:3] == "Sat" and not db.select("bot_todo", "bot == 0", "events_list")["events_list"]:
             db.update("bot_todo", "bot == 0", events_list=1)
@@ -49,14 +69,17 @@ class Bot(commands.Bot):
             await channel.send(embed=Embed(title=sat[0], description="\n\n".join(sat[1::]), colour=0xF9BA1C))
             await channel.send(embed=Embed(title=sun[0], description="\n\n".join(sun[1::]), colour=0xF9BA1C))
         for event in db.select("events"):
-            if int(time()) - event["datetime"] <= 600 and not event["mention"]:
+            if int(time()) - event["datetime"] <= 900 and not event["mention"]:
                 m = await channel.send(f"@everyone \nЧерез <t:{event['datetime']}:R> будет проходить ивент: \"{event['name']}\" от <@{event['organizer']}>")
                 db.update("events", f"name == {event['name']}", mention=m.id)
             elif int(time()) - event["datetime"] < 30:
                 fm = await channel.fetch_message(event["mention"])
                 await fm.delete()
                 m = await channel.send(f"@everyone \nУже совсем скоро начнётся ивент: \"{event['name']}\" от <@{event['organizer']}>")
-                voice = await self.get_guild(GUILD_ID).create_voice_channel(name=event["name"], category=utils.get(self.get_guild(GUILD_ID).categories, id=EVENTS_CATEGORY))
+                overwrites = {
+                    self.get_guild(GUILD_ID).get_member(event["organizer"]): PermissionOverwrite(priority_speaker=True, mute_members=True, deafen_members=True, move_members=True)
+                }
+                voice = await self.get_guild(GUILD_ID).create_voice_channel(name=event["name"], category=utils.get(self.get_guild(GUILD_ID).categories, id=EVENTS_CATEGORY), overwrites=overwrites)
                 db.update("events", f"name == {event['name']}", mention=m.id, voice_channel=voice)
 
 
