@@ -37,7 +37,7 @@ class CMD(commands.Cog):
             if channel.id == CHANNELS["Events_list"]:
                 event_message = await channel.send(embed=Embed(title=event_name, description=f'Запланировано на **{schedule_event["day"]} {schedule_event["date"]} {schedule_event["month"]}** в **{schedule_event["time"]}** по МСК.\n'
                                                                                              f'Организатор: {interaction.user.mention}', colour=0x5BF5D1))
-                db.insert("events", datetime=unix_event, name=event_name, message_id=event_message.id)
+                db.insert("events", datetime=unix_event, name=event_name, organizer=interaction.user.id, message_id=event_message.id)
             elif channel.id == CHANNELS["Organizers"]:
                 await channel.send(f"<@{interaction.user.id}> создал событие", embed=Embed(title=event_name, description=f'На {schedule_event["day"]} {schedule_event["date"]} {schedule_event["month"]} в {schedule_event["time"]} по МСК.', colour=0x21F300))
 
