@@ -94,6 +94,20 @@ class Bot(commands.Bot):
                 voice = await self.get_guild(GUILD_ID).create_voice_channel(name=event["name"], category=utils.get(self.get_guild(GUILD_ID).categories, id=EVENTS_CATEGORY), overwrites=overwrites)
                 db.update("events", f"name == {event['name']}", mention=m.id, voice_channel=voice)
 
+    @tasks.loop(minutes=10)
+    async def voice_check(self):
+        for voice in self.get_guild(GUILD_ID).voice_channels:
+            if voice.members:
+                continue
+            event = db.select("events", f"voice == {voice.id}", "datetime", "message_id", "mention")
+            if int(time()) - event["datetime"] >= 1800:
+                await voice.delete(reason="Ивент окончен")
+                mess = await utils.get(self.get_guild(GUILD_ID).text_channels, id=CHANNELS["Schedule"]).fetch_message(event["mention"])
+                mess2 = await utils.get(self.get_guild(GUILD_ID).text_channels, id=CHANNELS["Events_list"]).fetch_message(event["message_id"])
+                await mess.delete()
+                await mess2.delete()
+                db.delete("events", f"voice == {voice.id}")
+
 
 client = Bot(command_prefix="/", intents=Intents.all())
 client.remove_command("help")
