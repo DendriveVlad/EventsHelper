@@ -16,8 +16,9 @@ db = DB()
 class Bot(commands.Bot):
     async def on_ready(self):
         for member in self.get_guild(GUILD_ID).members:
-            if not db.select("members", f"id == {member.id}"):
+            if not (db.select("members", f"id == {member.id}") or member.id == MY_ID):
                 db.insert("members", id=member.id, date_connection=time())
+        print("Ready")
 
     async def on_member_join(self, member):
         if not db.select("members", f"id == {member.id}"):
