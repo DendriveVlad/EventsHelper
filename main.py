@@ -1,3 +1,4 @@
+import distutils.cygwinccompiler
 import os
 from asyncio import sleep
 from time import time, ctime
@@ -121,6 +122,10 @@ class Bot(commands.Bot):
     async def invites_check(self):
         for invite in await self.get_guild(GUILD_ID).invites():
             if invite.uses:
+                invite_count = db.select("members", f"id == {invite.inviter.id}", "invites")["invites"]
+                if invite_count < 5 <= invite_count + invite.uses:
+                    member = self.get_guild(GUILD_ID).get_member(invite.inviter.id)
+                    await member.add_roles(self.get_guild(GUILD_ID).get_role(ROLES["Extrovert"]))
                 db.update("members", f"id == {invite.inviter.id}", invites=db.select("members", f"id == {invite.inviter.id}", "invites")["invites"] + invite.uses)
                 await invite.delete()
 
