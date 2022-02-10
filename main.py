@@ -95,6 +95,8 @@ class Bot(commands.Bot):
                 overwrites = {
                     self.get_guild(GUILD_ID).get_member(event["organizer"]): PermissionOverwrite(priority_speaker=True, mute_members=True, deafen_members=True, move_members=True, manage_channels=True)
                 }
+                if ctime(event["datetime"])[0:3] == "Sun":
+                    overwrites[self.get_guild(GUILD_ID).get_role(ROLES["everyone"])] = PermissionOverwrite(speak=False)
                 voice = await self.get_guild(GUILD_ID).create_voice_channel(name=event["name"], category=utils.get(self.get_guild(GUILD_ID).categories, id=EVENTS_CATEGORY), overwrites=overwrites)
                 db.update("events", f"name == '{event['name']}'", mention=m.id, voice_channel=voice)
 
@@ -105,7 +107,10 @@ class Bot(commands.Bot):
                 continue
             event = db.select("events", f"voice == {voice.id}", "datetime", "message_id", "mention")
             if int(time()) - event["datetime"] >= 1800:
-                await voice.delete(reason="Ивент окончен")
+                try:
+                    await voice.delete(reason="Ивент окончен")
+                except AttributeError:
+                    pass
                 mess = await utils.get(self.get_guild(GUILD_ID).text_channels, id=CHANNELS["Schedule"]).fetch_message(event["mention"])
                 mess2 = await utils.get(self.get_guild(GUILD_ID).text_channels, id=CHANNELS["Events_list"]).fetch_message(event["message_id"])
                 await mess.delete()
