@@ -82,8 +82,8 @@ class Bot(commands.Bot):
                     case "Sun":
                         sun.append(f"{event['name']} пройдёт <t:{event['datetime']}>\nОрганизатор: <@{event['organizer']}>")
             await channel.purge()
-            await channel.send(embed=Embed(title=sat[0], description="\n\n".join(sat[1::]), colour=0xF9BA1C))
-            await channel.send(embed=Embed(title=sun[0], description="\n\n".join(sun[1::]), colour=0xF9BA1C))
+            await channel.send(embed=Embed(title=sat[0], description="\n\n".join(sat[1::] + "\n\n***Время указано в МСК (UTC+3)**"), colour=0xF9BA1C))
+            await channel.send(embed=Embed(title=sun[0], description="\n\n".join(sun[1::] + "\n\n***Время указано в МСК (UTC+3)**"), colour=0xF9BA1C))
         for event in db.select("events"):
             if int(time()) - event["datetime"] <= 900 and not event["mention"]:
                 m = await channel.send(f"@everyone \nЧерез <t:{event['datetime']}:R> будет проходить ивент: \"{event['name']}\" от <@{event['organizer']}>")
