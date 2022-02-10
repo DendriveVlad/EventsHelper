@@ -93,7 +93,7 @@ class Bot(commands.Bot):
                 await fm.delete()
                 m = await channel.send(f"@everyone \nУже совсем скоро начнётся ивент: \"{event['name']}\" от <@{event['organizer']}>")
                 overwrites = {
-                    self.get_guild(GUILD_ID).get_member(event["organizer"]): PermissionOverwrite(priority_speaker=True, mute_members=True, deafen_members=True, move_members=True)
+                    self.get_guild(GUILD_ID).get_member(event["organizer"]): PermissionOverwrite(priority_speaker=True, mute_members=True, deafen_members=True, move_members=True, manage_channels=True)
                 }
                 voice = await self.get_guild(GUILD_ID).create_voice_channel(name=event["name"], category=utils.get(self.get_guild(GUILD_ID).categories, id=EVENTS_CATEGORY), overwrites=overwrites)
                 db.update("events", f"name == {event['name']}", mention=m.id, voice_channel=voice)
