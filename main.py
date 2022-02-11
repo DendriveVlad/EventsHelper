@@ -69,7 +69,6 @@ class Bot(commands.Bot):
 
             return
         if ctime()[0:3] == "Sat" and not db.select("bot_todo", "bot == 0", "events_list")["events_list"]:
-            db.update("bot_todo", "bot == 0", events_list=1)
             sat = ["Расписание на Субботу:"]
             sun = ["Расписание на Воскресенье:"]
             events = db.select("events")
@@ -77,17 +76,18 @@ class Bot(commands.Bot):
             for event in events:
                 match ctime(event["datetime"])[0:3]:
                     case "Sat":
-                        sat.append(f"{event['name']} пройдёт <t:{event['datetime']}>\nОрганизатор: <@{event['organizer']}>")
+                        sat.append(f"**{event['name']}** пройдёт <t:{event['datetime']}>\nОрганизатор: <@{event['organizer']}>")
                     case "Sun":
-                        sun.append(f"{event['name']} пройдёт <t:{event['datetime']}>\nОрганизатор: <@{event['organizer']}>")
+                        sun.append(f"**{event['name']}** пройдёт <t:{event['datetime']}>\nОрганизатор: <@{event['organizer']}>")
             await channel.purge()
-            await channel.send(embed=Embed(title=sat[0], description="\n\n".join(sat[1::] + "\n\n***Время указано в МСК (UTC+3)**"), colour=0xF9BA1C))
-            await channel.send(embed=Embed(title=sun[0], description="\n\n".join(sun[1::] + "\n\n***Время указано в МСК (UTC+3)**"), colour=0xF9BA1C))
+            await channel.send(embed=Embed(title=sat[0], description="\n\n".join(sat[1::]) + "\n\n***Время указано в МСК (UTC+3)**", colour=0xF9BA1C))
+            await channel.send(embed=Embed(title=sun[0], description="\n\n".join(sun[1::]) + "\n\n***Время указано в МСК (UTC+3)**", colour=0xF9BA1C))
+            db.update("bot_todo", "bot == 0", events_list=1)
         for event in db.select("events"):
-            if int(time()) - event["datetime"] <= 900 and not event["mention"]:
+            if event["datetime"] - int(time()) <= 900 and not event["mention"]:
                 m = await channel.send(f"@everyone \nЧерез <t:{event['datetime']}:R> будет проходить ивент: \"{event['name']}\" от <@{event['organizer']}>")
                 db.update("events", f"name == '{event['name']}'", mention=m.id)
-            elif int(time()) - event["datetime"] < 30:
+            elif event["datetime"]- int(time())  < 30:
                 fm = await channel.fetch_message(event["mention"])
                 await fm.delete()
                 m = await channel.send(f"@everyone \nУже совсем скоро начнётся ивент: \"{event['name']}\" от <@{event['organizer']}>")
