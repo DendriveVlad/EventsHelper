@@ -76,9 +76,9 @@ class Bot(commands.Bot):
             for event in events:
                 match ctime(event["datetime"])[0:3]:
                     case "Sat":
-                        sat.append(f"**{event['name']}** пройдёт <t:{event['datetime']}:t>\nОрганизатор: <@{event['organizer']}>")
+                        sat.append(f"**{event['name']}** пройдёт в <t:{event['datetime']}:t>\nОрганизатор: <@{event['organizer']}>")
                     case "Sun":
-                        sun.append(f"**{event['name']}** пройдёт <t:{event['datetime']}:t>\nОрганизатор: <@{event['organizer']}>")
+                        sun.append(f"**{event['name']}** пройдёт в <t:{event['datetime']}:t>\nОрганизатор: <@{event['organizer']}>")
             await channel.purge()
             await channel.send(embed=Embed(title=sat[0], description="\n\n".join(sat[1::]), colour=0xF9BA1C))
             await channel.send(embed=Embed(title=sun[0], description="\n\n".join(sun[1::]), colour=0xF9BA1C))
