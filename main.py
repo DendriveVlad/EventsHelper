@@ -1,6 +1,4 @@
-import distutils.cygwinccompiler
 import os
-from asyncio import sleep
 from time import time, ctime
 
 from nextcord import *
