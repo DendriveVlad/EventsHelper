@@ -87,7 +87,7 @@ class Bot(commands.Bot):
             if event["datetime"] - int(time()) <= 900 and not event["mention"]:
                 m = await channel.send(f"@everyone \n<t:{event['datetime']}:R> будет проходить ивент: **{event['name']}** от <@{event['organizer']}>")
                 db.update("events", f"name == '{event['name']}'", mention=m.id)
-            elif event["datetime"] - int(time()) < 30:
+            elif event["datetime"] - int(time()) < 30 and not event["voice_channel"]:
                 fm = await channel.fetch_message(event["mention"])
                 await fm.delete()
                 overwrites = {
@@ -101,7 +101,11 @@ class Bot(commands.Bot):
 
     @tasks.loop(minutes=10)
     async def voice_check(self):
-        for event in db.select("events", "voice_channel != 0"):
+        events = db.select("events", "voice_channel != 0")
+        if type(events) == dict:
+            events = [events]
+
+        for event in events:
             if int(time()) - event["datetime"] >= 1800:
                 voice = utils.get(self.get_guild(GUILD_ID).voice_channels, id=event["voice_channel"])
                 if voice.members:
