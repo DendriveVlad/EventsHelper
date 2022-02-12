@@ -90,22 +90,22 @@ class Bot(commands.Bot):
             elif event["datetime"] - int(time()) < 30:
                 fm = await channel.fetch_message(event["mention"])
                 await fm.delete()
-                m = await channel.send(f"@everyone \nУже совсем скоро начнётся ивент: **{event['name']}** от <@{event['organizer']}>")
                 overwrites = {
                     self.get_guild(GUILD_ID).get_member(event["organizer"]): PermissionOverwrite(priority_speaker=True, mute_members=True, deafen_members=True, move_members=True, manage_channels=True)
                 }
                 if ctime(event["datetime"])[0:3] == "Sun":
                     overwrites[self.get_guild(GUILD_ID).get_role(ROLES["everyone"])] = PermissionOverwrite(speak=False)
                 voice = await self.get_guild(GUILD_ID).create_voice_channel(name=event["name"], category=utils.get(self.get_guild(GUILD_ID).categories, id=EVENTS_CATEGORY), overwrites=overwrites)
-                db.update("events", f"name == '{event['name']}'", mention=m.id, voice_channel=voice)
+                m = await channel.send(f"@everyone \nИвент **{event['name']}** от <@{event['organizer']}> уже начался. Заходите: <#{voice.id}>")
+                db.update("events", f"name == '{event['name']}'", mention=m.id, voice_channel=voice.id)
 
     @tasks.loop(minutes=10)
     async def voice_check(self):
-        for voice in self.get_guild(GUILD_ID).voice_channels:
-            if voice.members or voice.id == IGNORE_VS:
-                continue
-            event = db.select("events", f"voice == {voice.id}", "datetime", "message_id", "mention")
+        for event in db.select("events", "voice_channel != 0"):
             if int(time()) - event["datetime"] >= 1800:
+                voice = utils.get(self.get_guild(GUILD_ID).voice_channels, id=event["voice_channel"])
+                if voice.members:
+                    continue
                 try:
                     await voice.delete(reason="Ивент окончен")
                 except AttributeError:
@@ -114,7 +114,7 @@ class Bot(commands.Bot):
                 mess2 = await utils.get(self.get_guild(GUILD_ID).text_channels, id=CHANNELS["Events_list"]).fetch_message(event["message_id"])
                 await mess.delete()
                 await mess2.delete()
-                db.delete("events", f"voice == {voice.id}")
+                db.delete("events", f"voice_channel == {event['voice_channel']}")
 
     @tasks.loop(hours=24)
     async def invites_check(self):
