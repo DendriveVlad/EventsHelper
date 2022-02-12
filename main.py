@@ -102,6 +102,8 @@ class Bot(commands.Bot):
     @tasks.loop(minutes=10)
     async def voice_check(self):
         events = db.select("events", "voice_channel != 0")
+        if events is None:
+            return
         if type(events) == dict:
             events = [events]
 
