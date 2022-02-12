@@ -27,7 +27,7 @@ class Bot(commands.Bot):
 
     async def on_member_join(self, member: Member):
         if not (db.select("members", f"id == {member.id}") or member.id == MY_ID):
-            db.insert("members", id=member.id, date_connection=time())
+            db.insert("members", id=member.id, date_connection=int(time()))
 
     async def on_voice_state_update(self, member: Member, before: VoiceState, after: VoiceState):
         if not after.channel and before.channel:
@@ -37,9 +37,9 @@ class Bot(commands.Bot):
                 db.update("members", f"id == {member.id}", voice_time=1)
             else:
                 db.update("members", f"id == {member.id}", voice_time=0)
-        elif after.channel != before.channel:
+        elif after.channel != before.channel and after.channel.id != IGNORE_VS:
             if db.select("members", f"id == {member.id}", "voice_time")["voice_time"] != 1:
-                db.update("members", f"id == {member.id}", voice_time=time())
+                db.update("members", f"id == {member.id}", voice_time=int(time()))
 
     @tasks.loop(seconds=60)
     async def check_event(self):
