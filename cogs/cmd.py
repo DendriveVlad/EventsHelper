@@ -61,7 +61,7 @@ class CMD(commands.Cog):
                 return
 
         view = EventRemoveAccept()
-        await interaction.response.send_message(f"Вы уверены, что хотите удалить ивент \"{event['name']}\"?", ephemeral=True, view=view)
+        await interaction.response.send_message(f"Вы уверены, что хотите удалить ивент **{event['name']}**?", ephemeral=True, view=view)
         await view.wait()
         if view.accept:
             db.delete("events", f"name == '{event_name}'")

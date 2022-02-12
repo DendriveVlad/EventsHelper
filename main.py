@@ -85,12 +85,12 @@ class Bot(commands.Bot):
             db.update("bot_todo", "bot == 0", events_list=1)
         for event in db.select("events"):
             if event["datetime"] - int(time()) <= 900 and not event["mention"]:
-                m = await channel.send(f"@everyone \nЧерез <t:{event['datetime']}:R> будет проходить ивент: \"{event['name']}\" от <@{event['organizer']}>")
+                m = await channel.send(f"@everyone \n<t:{event['datetime']}:R> будет проходить ивент: **{event['name']}** от <@{event['organizer']}>")
                 db.update("events", f"name == '{event['name']}'", mention=m.id)
             elif event["datetime"] - int(time()) < 30:
                 fm = await channel.fetch_message(event["mention"])
                 await fm.delete()
-                m = await channel.send(f"@everyone \nУже совсем скоро начнётся ивент: \"{event['name']}\" от <@{event['organizer']}>")
+                m = await channel.send(f"@everyone \nУже совсем скоро начнётся ивент: **{event['name']}** от <@{event['organizer']}>")
                 overwrites = {
                     self.get_guild(GUILD_ID).get_member(event["organizer"]): PermissionOverwrite(priority_speaker=True, mute_members=True, deafen_members=True, move_members=True, manage_channels=True)
                 }
