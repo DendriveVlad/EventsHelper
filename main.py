@@ -116,12 +116,12 @@ class Bot(commands.Bot):
                     await voice.delete(reason="Ивент окончен")
                 except AttributeError:
                     pass
+                mess = await utils.get(self.get_guild(GUILD_ID).text_channels, id=CHANNELS["Schedule"]).fetch_message(event["mention"])
+                mess2 = await utils.get(self.get_guild(GUILD_ID).text_channels, id=CHANNELS["Events_list"]).fetch_message(event["message_id"])
                 try:
-                    mess = await utils.get(self.get_guild(GUILD_ID).text_channels, id=CHANNELS["Schedule"]).fetch_message(event["mention"])
+                    await mess.delete()
                 except AttributeError:
                     pass
-                mess2 = await utils.get(self.get_guild(GUILD_ID).text_channels, id=CHANNELS["Events_list"]).fetch_message(event["message_id"])
-                await mess.delete()
                 await mess2.delete()
                 db.delete("events", f"voice_channel == {event['voice_channel']}")
 
