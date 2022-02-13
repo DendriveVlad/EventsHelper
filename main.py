@@ -83,7 +83,11 @@ class Bot(commands.Bot):
             await channel.send(embed=Embed(title=sat[0], description="\n\n".join(sat[1::]), colour=0xF9BA1C))
             await channel.send(embed=Embed(title=sun[0], description="\n\n".join(sun[1::]), colour=0xF9BA1C))
             db.update("bot_todo", "bot == 0", events_list=1)
-        for event in db.select("events"):
+
+        events = db.select("events")
+        if type(events) == dict:
+            events = [events]
+        for event in events:
             if event["datetime"] - int(time()) <= 900 and not event["mention"]:
                 m = await channel.send(f"@everyone \n<t:{event['datetime']}:R> будет проходить ивент: **{event['name']}** от <@{event['organizer']}>")
                 db.update("events", f"name == '{event['name']}'", mention=m.id)
