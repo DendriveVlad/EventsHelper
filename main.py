@@ -91,7 +91,7 @@ class Bot(commands.Bot):
                 fm = await channel.fetch_message(event["mention"])
                 await fm.delete()
                 overwrites = {
-                    self.get_guild(GUILD_ID).get_member(event["organizer"]): PermissionOverwrite(priority_speaker=True, mute_members=True, deafen_members=True, move_members=True, manage_channels=True)
+                    self.get_guild(GUILD_ID).get_member(event["organizer"]): PermissionOverwrite(priority_speaker=True, mute_members=True, deafen_members=True, move_members=True, manage_permissions=True)
                 }
                 if ctime(event["datetime"])[0:3] == "Sun":
                     overwrites[self.get_guild(GUILD_ID).get_role(ROLES["everyone"])] = PermissionOverwrite(speak=False)
