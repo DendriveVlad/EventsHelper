@@ -51,21 +51,22 @@ class Bot(commands.Bot):
                 db.update("bot_todo", "bot == 0", events_list=0)
                 for member in db.select("members"):
                     if member["voice_time"]:
-                        db.update("members", f"id == {member.id}", voice_time=0, missed_events=0)
+                        db.update("members", f"id == {member['id']}", voice_time=0, missed_events=0)
                     else:
                         if member["missed_events"] >= 2:
+                            user = self.get_guild(GUILD_ID).get_member(member["id"])
                             if member["organizer"]:
-                                await member.remove_roles(utils.get(member.guild.roles, id=ROLES["Organizer"]))
-                                db.update("members", f"id == {member.id}", missed_events=1, organizer=0, voice_time=0)
+                                await user.remove_roles(utils.get(user.guild.roles, id=ROLES["Organizer"]))
+                                db.update("members", f"id == {member['id']}", missed_events=1, organizer=0, voice_time=0)
                             else:
                                 if member["kicked"] >= 2:
-                                    await member.ban(reason="Третий кик. Пропуск ивентов более 3-х недель")
-                                    db.update("members", f"id == {member.id}", missed_events=0, kicked=3, voice_time=0)
+                                    await user.ban(reason="Третий кик. Пропуск ивентов более 3-х недель")
+                                    db.update("members", f"id == {member['id']}", missed_events=0, kicked=3, voice_time=0)
                                 else:
-                                    await member.kick(reason="Пропуск ивентов более 3-х недель")
-                                    db.update("members", f"id == {member.id}", missed_events=0, kicked=member["kicked"] + 1, voice_time=0)
+                                    await user.kick(reason="Пропуск ивентов более 3-х недель")
+                                    db.update("members", f"id == {member['id']}", missed_events=0, kicked=member["kicked"] + 1, voice_time=0)
                         else:
-                            db.update("members", f"id == {member.id}", missed_events=member["missed_events"] + 1, voice_time=0)
+                            db.update("members", f"id == {member['id']}", missed_events=member["missed_events"] + 1, voice_time=0)
 
             return
         if ctime()[0:3] == "Sat" and not db.select("bot_todo", "bot == 0", "events_list")["events_list"]:
