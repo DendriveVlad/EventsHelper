@@ -77,7 +77,7 @@ class Bot(commands.Bot):
                         else:
                             db.update("members", f"id == {member['id']}", missed_events=member["missed_events"] + 1, voice_time=0)
                 voice = self.get_guild(GUILD_ID).get_channel(CHANNELS["Gazebo"])
-                await voice.set_permissions(ROLES["everyone"], view_channel=False)
+                await voice.set_permissions(self.get_guild(GUILD_ID).get_role(ROLES["everyone"]), view_channel=False)
             return
         if ctime()[0:3] == "Sat" and not db.select("bot_todo", "bot == 0", "events_list")["events_list"]:
             sat = ["Расписание на Субботу:"]
@@ -94,7 +94,7 @@ class Bot(commands.Bot):
             await channel.send(embed=Embed(title=sat[0], description="\n\n".join(sat[1::]), colour=0xF9BA1C))
             await channel.send(embed=Embed(title=sun[0], description="\n\n".join(sun[1::]), colour=0xF9BA1C))
             voice = self.get_guild(GUILD_ID).get_channel(CHANNELS["Gazebo"])
-            await voice.set_permissions(ROLES["everyone"], view_channel=True)
+            await voice.set_permissions(self.get_guild(GUILD_ID).get_role(ROLES["everyone"]), view_channel=True)
             db.update("bot_todo", "bot == 0", events_list=1)
 
         events = db.select("events")
