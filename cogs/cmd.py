@@ -130,7 +130,7 @@ class CMD(commands.Cog):
         if orgs_count < 6:
             orgs_count -= 1
         view = Voting(orgs_count, interaction.user, f"{interaction.user.mention} хочет снять участника {member.mention} с организатора. Нажмите на кнопку нижу, чтобы проголосовать **ЗА**.")
-        m = await interaction.response.send_message(f"{interaction.user.mention} хочет снять участника {member.mention} с организатора. Нажмите на кнопку нижу, чтобы проголосовать **ЗА**. (1/{orgs_count if orgs_count <= 5 else 5})", view=view)
+        await interaction.response.send_message(f"{interaction.user.mention} хочет снять участника {member.mention} с организатора. Нажмите на кнопку нижу, чтобы проголосовать **ЗА**. (1/{orgs_count if orgs_count <= 5 else 5})", view=view)
         await view.wait()
         for channel in interaction.guild.channels:
             if channel.id == CHANNELS["Organizers"]:
@@ -162,7 +162,7 @@ class CMD(commands.Cog):
         if orgs_count < 6:
             orgs_count -= 1
         view = Voting(orgs_count, interaction.user, f"{interaction.user.mention} хочет кикнуть участника {member.mention}. Нажмите на кнопку нижу, чтобы проголосовать **ЗА**.")
-        m = await interaction.response.send_message(f"{interaction.user.mention} хочет кикнуть участника {member.mention}. Нажмите на кнопку нижу, чтобы проголосовать **ЗА**. (1/{orgs_count if orgs_count <= 5 else 5})", view=view)
+        await interaction.response.send_message(f"{interaction.user.mention} хочет кикнуть участника {member.mention}. Нажмите на кнопку нижу, чтобы проголосовать **ЗА**. (1/{orgs_count if orgs_count <= 5 else 5})", view=view)
         await view.wait()
         for channel in interaction.guild.channels:
             if channel.id == CHANNELS["Organizers"]:
@@ -182,15 +182,23 @@ class CMD(commands.Cog):
         if interaction.channel_id != CHANNELS["Organizers"]:
             await interaction.response.send_message(embed=Embed(title="❌Wrong channel❌", colour=0xBF1818), ephemeral=True)
             return
-        view = TakeEvent(interaction.user.id)
-        m = await interaction.response.send_message(f"{interaction.user.mention} передаёт свой ивент *{event_name}*. Чтобы взять ивент нажмите ниже.", view=view)
-        await view.wait()
-        if not view.user:
-            await m.delete()
-            await interaction.channel.send(embed=Embed(title=f"Передача ивента *{event_name}* отменена", colour=0xBF1818))
+        event = db.select("events", f"name == '{event_name}'")
+        if not event:
+            await interaction.response.send_message(embed=Embed(title="❌Такого ивента не существует❌", colour=0xBF1818), ephemeral=True)
             return
-        db.update("events", f"name == {event_name}", organizer=view.user.id)
-        await interaction.channel.send(embed=Embed(title=f"Ивент передан", description=f"{view.user.mention} становится организатором ивента {event_name}", colour=0x21F300))
+        if event["organizer"] != interaction.user.id:
+            await interaction.response.send_message(embed=Embed(title="Это не ваш ивент", colour=0xBF1818), ephemeral=True)
+            return
+        view = TakeEvent(interaction.user.id)
+        await interaction.response.send_message("Передача...", ephemeral=True)
+        m = await interaction.channel.send(f"{interaction.user.mention} передаёт свой ивент **{event_name}**. Чтобы взять ивент нажмите ниже.", view=view)
+        await view.wait()
+        await m.delete()
+        if not view.user:
+            await interaction.channel.send(embed=Embed(title=f"Передача ивента **{event_name}** отменена", colour=0xBF1818))
+            return
+        db.update("events", f"name == '{event_name}'", organizer=view.user.id)
+        await interaction.channel.send(embed=Embed(title=f"Ивент передан", description=f"{view.user.mention} становится организатором ивента **{event_name}**", colour=0x21F300))
 
     def __getEventDetails(self, event) -> dict:
         schedule_event = {}

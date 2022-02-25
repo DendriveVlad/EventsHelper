@@ -221,8 +221,9 @@ class TakeEvent(View):
             if self.cancel:
                 self.user = 0
                 self.stop()
+                return
             self.cancel = True
-            interaction.response.send_message("Вы отдаёте ивент. Если вы хотите отменить передачу ивента. Нажмите на кнопку выше ещё раз", ephemeral=True)
+            await interaction.response.send_message("Вы отдаёте ивент. Если вы хотите отменить передачу ивента. Нажмите на кнопку выше ещё раз", ephemeral=True)
             return
         self.user = interaction.user
         self.stop()

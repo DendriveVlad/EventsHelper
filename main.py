@@ -31,7 +31,7 @@ class Bot(commands.Bot):
 
     async def on_voice_state_update(self, member: Member, before: VoiceState, after: VoiceState):
         if not after.channel and before.channel:
-            if after.channel.id == CHANNELS["Gazebo"]:
+            if before.channel.id == CHANNELS["Gazebo"]:
                 await member.remove_roles(self.get_guild(GUILD_ID).get_role(ROLES["GazeboRole"]))
                 return
             if db.select("members", f"id == {member.id}", "voice_time")["voice_time"] == 0:
