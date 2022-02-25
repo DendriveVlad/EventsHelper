@@ -25,6 +25,8 @@ class CMD(commands.Cog):
         view = ChoiceDay()
         await interaction.response.send_message("Выберите день проведения", ephemeral=True, view=view)
         await view.wait()
+        if not view.time:
+            return
 
         weekdays = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
         now_time = int(time())
