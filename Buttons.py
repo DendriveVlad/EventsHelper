@@ -1,4 +1,4 @@
-from nextcord import ButtonStyle, Embed, Interaction
+from nextcord import ButtonStyle, Embed, Interaction, User
 from nextcord.ui import View, button
 
 
@@ -206,3 +206,23 @@ class Voting(View):
             if self.accept_count >= self.max:
                 await interaction.message.delete()
                 self.stop()
+
+
+class TakeEvent(View):
+    def __init__(self, creator):
+        super().__init__()
+        self.creator = creator
+        self.cancel = False
+        self.user: User = None
+
+    @button(label="Взять ивент", style=ButtonStyle.green, emoji="➡")
+    async def accept(self, button, interaction: Interaction):
+        if self.creator == interaction.user.id:
+            if self.cancel:
+                self.user = 0
+                self.stop()
+            self.cancel = True
+            interaction.response.send_message("Вы отдаёте ивент. Если вы хотите отменить передачу ивента. Нажмите на кнопку выше ещё раз", ephemeral=True)
+            return
+        self.user = interaction.user
+        self.stop()

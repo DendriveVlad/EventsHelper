@@ -5,7 +5,7 @@ from nextcord.ext import commands
 
 from config import *
 from DataBase import DB
-from Buttons import ChoiceDay, EventRemoveAccept, Voting
+from Buttons import *
 
 db = DB()
 
@@ -176,6 +176,21 @@ class CMD(commands.Cog):
                 else:
                     await channel.send(embed=Embed(title=f"{member} остаётся на сервере", description="Недостаточно голосов", colour=0xBF1818))
                 break
+
+    @slash_command(name="passon", description="Передать кому-то свой ивент", guild_ids=[GUILD_ID])
+    async def passon(self, interaction: Interaction, event_name):
+        if interaction.channel_id != CHANNELS["Organizers"]:
+            await interaction.response.send_message(embed=Embed(title="❌Wrong channel❌", colour=0xBF1818), ephemeral=True)
+            return
+        view = TakeEvent(interaction.user.id)
+        m = await interaction.response.send_message(f"{interaction.user.mention} передаёт свой ивент *{event_name}*. Чтобы взять ивент нажмите ниже.", view=view)
+        await view.wait()
+        if not view.user:
+            await m.delete()
+            await interaction.channel.send(embed=Embed(title=f"Передача ивента *{event_name}* отменена", colour=0xBF1818))
+            return
+        db.update("events", f"name == {event_name}", organizer=view.user.id)
+        await interaction.channel.send(embed=Embed(title=f"Ивент передан", description=f"{view.user.mention} становится организатором ивента {event_name}", colour=0x21F300))
 
     def __getEventDetails(self, event) -> dict:
         schedule_event = {}
