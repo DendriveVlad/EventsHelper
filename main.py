@@ -41,6 +41,9 @@ class Bot(commands.Bot):
             else:
                 db.update("members", f"id == {member.id}", voice_time=0)
         elif after.channel != before.channel and after.channel.id != IGNORE_VS:
+            if before.channel and before.channel.id == CHANNELS["Gazebo"]:
+                await member.remove_roles(self.get_guild(GUILD_ID).get_role(ROLES["GazeboRole"]))
+                return
             if after.channel.id == CHANNELS["Gazebo"]:
                 await member.add_roles(self.get_guild(GUILD_ID).get_role(ROLES["GazeboRole"]))
                 return
@@ -94,7 +97,7 @@ class Bot(commands.Bot):
             await channel.send(embed=Embed(title=sat[0], description="\n\n".join(sat[1::]), colour=0xF9BA1C))
             await channel.send(embed=Embed(title=sun[0], description="\n\n".join(sun[1::]), colour=0xF9BA1C))
             voice = self.get_guild(GUILD_ID).get_channel(CHANNELS["Gazebo"])
-            await voice.set_permissions(self.get_guild(GUILD_ID).get_role(ROLES["everyone"]), view_channel=True)
+            await voice.set_permissions(self.get_guild(GUILD_ID).get_role(ROLES["everyone"]), view_channel=True, speak=True, video=True)
             db.update("bot_todo", "bot == 0", events_list=1)
 
         events = db.select("events")
