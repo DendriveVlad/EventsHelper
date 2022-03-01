@@ -15,12 +15,15 @@ class CMD(commands.Cog):
         self.client = bot
 
     @slash_command(name="create", description="Создать ивент", guild_ids=[GUILD_ID])
-    async def create(self, interaction: Interaction, event_name):
+    async def create(self, interaction: Interaction, event_name, info: str = SlashOption(name="info", description="Информация о ивенте (должно содержать прямую ссылку на описание)", required=False)):
         if interaction.channel_id != CHANNELS["Organizers"]:
             await interaction.response.send_message(embed=Embed(title="❌Wrong channel❌", colour=0xBF1818), ephemeral=True)
             return
         if len(event_name) > 128:
             await interaction.response.send_message(embed=Embed(title="❌Название ивента не может быть больше 128 символов❌", description=f"Скопируйте и сделайте его короче: **{event_name}**", colour=0xBF1818), ephemeral=True)
+            return
+        if info and (" " in info or info.split("://")[0] not in ("https", "http")):
+            await interaction.response.send_message(embed=Embed(title="❌Не верно указана ссылка на информацию о ивенте❌", colour=0xBF1818), ephemeral=True)
             return
         view = ChoiceDay()
         await interaction.response.send_message("Выберите день проведения", ephemeral=True, view=view)
@@ -39,9 +42,10 @@ class CMD(commands.Cog):
             if channel.id == CHANNELS["Events_list"]:
                 event_message = await channel.send(embed=Embed(title=event_name, description=f'Запланировано на **{schedule_event["day"]} {schedule_event["date"]} {schedule_event["month"]}** в **{schedule_event["time"]}** по МСК.\n'
                                                                                              f'Организатор: {interaction.user.mention}', colour=0x5BF5D1))
-                db.insert("events", datetime=unix_event, name=event_name, organizer=interaction.user.id, message_id=event_message.id)
+                db.insert("events", datetime=unix_event, name=event_name, organizer=interaction.user.id, message_id=event_message.id, info=info)
             elif channel.id == CHANNELS["Organizers"]:
-                await channel.send(f"<@{interaction.user.id}> создал событие", embed=Embed(title=event_name, description=f'На {schedule_event["day"]} {schedule_event["date"]} {schedule_event["month"]} в {schedule_event["time"]} по МСК.', colour=0x21F300))
+                await channel.send(f"<@{interaction.user.id}> создал событие", embed=Embed(title=event_name, description=f'На {schedule_event["day"]} {schedule_event["date"]} {schedule_event["month"]} в {schedule_event["time"]} по МСК.' + \
+                                                                                                                         f"\nС описанием по ссылке: {info}" if info else "", colour=0x21F300))
 
     @slash_command(name="remove", description="Отменить ивент", guild_ids=[GUILD_ID])
     async def remove(self, interaction: Interaction, event_name):
@@ -187,7 +191,7 @@ class CMD(commands.Cog):
             await interaction.response.send_message(embed=Embed(title="❌Такого ивента не существует❌", colour=0xBF1818), ephemeral=True)
             return
         if event["organizer"] != interaction.user.id:
-            await interaction.response.send_message(embed=Embed(title="Это не ваш ивент", colour=0xBF1818), ephemeral=True)
+            await interaction.response.send_message(embed=Embed(title="❌Это не ваш ивент❌", colour=0xBF1818), ephemeral=True)
             return
         view = TakeEvent(interaction.user.id)
         await interaction.response.send_message("Передача...", ephemeral=True)
