@@ -217,14 +217,11 @@ class CMD(commands.Cog):
         if not event:
             await interaction.response.send_message(embed=Embed(title="❌Такого ивента не существует❌", colour=0xBF1818), ephemeral=True)
             return
-        if event["organizer"] != interaction.user.id:
-            await interaction.response.send_message(embed=Embed(title="❌Это не ваш ивент❌", colour=0xBF1818), ephemeral=True)
-            return
         today = ctime(int(time())).split()
         if today[0] in ("Sat", "Sun"):
             block_date = (int(today[2])) if today[0] == "Sun" else (int(today[2]), int(today[2]) + 1)
             if int(ctime(event["datetime"]).split()[2]) in block_date:
-                await interaction.response.send_message(embed=Embed(title="❌Невозможно удалить уже утверждённый ивент❌", description="Если Вы не можете провести ивент, то попросите это сделать кого-нибудь другого", colour=0xBF1818), ephemeral=True)
+                await interaction.response.send_message(embed=Embed(title="❌Невозможно перенести уже утверждённый ивент❌", colour=0xBF1818), ephemeral=True)
                 return
 
         view = ChoiceDay()
