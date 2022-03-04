@@ -245,9 +245,9 @@ class CMD(commands.Cog):
                 event_message = await channel.fetch_message(event["message_id"])
                 await event_message.edit(embed=Embed(title=event_name, description=f'Запланировано на **{schedule_event["day"]} {schedule_event["date"]} {schedule_event["month"]}** в **{schedule_event["time"]}** по МСК.\n'
                                                                                    f'Организатор: {interaction.user.mention}', colour=0x5BF5D1))
-                db.update("events", f"name == {event_name}", datetime=unix_event)
+                db.update("events", f"name == '{event_name}'", datetime=unix_event)
             elif channel.id == CHANNELS["Organizers"]:
-                await channel.send(f"<@{interaction.user.id}> создал событие", embed=Embed(title=event_name, description=f"Перенесён на {schedule_event['day']} {schedule_event['date']} {schedule_event['month']} в {schedule_event['time']} по МСК.", colour=0x21F300))
+                await channel.send(f"<@{interaction.user.id}> переносит событие", embed=Embed(title=event_name, description=f"Перенесён на {schedule_event['day']} {schedule_event['date']} {schedule_event['month']} в {schedule_event['time']} по МСК.", colour=0x21F300))
 
     def __getEventDetails(self, event) -> dict:
         schedule_event = {}
