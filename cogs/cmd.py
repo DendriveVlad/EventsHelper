@@ -238,8 +238,8 @@ class CMD(commands.Cog):
         if weekdays.index(ctime(now_time)[0:3]) > 4:
             now_time += 172800
         unix_event = ((now_time + 86400 * (view.day - (weekdays.index(ctime(now_time)[0:3]) + 1))) - [(h * 60 + m) * 60 + s for h, m, s in [list(map(int, ctime(now_time)[11:19].split(":")))]][0]) + (view.time * 60 * 60 if view.time < 100 else ((view.time // 10) * 60 + 30) * 60)
-        event = ctime(unix_event).split()
-        schedule_event = self.__getEventDetails(event)
+        event_time = ctime(unix_event).split()
+        schedule_event = self.__getEventDetails(event_time)
         for channel in interaction.guild.channels:
             if channel.id == CHANNELS["Events_list"]:
                 event_message = await channel.fetch_message(event["message_id"])
