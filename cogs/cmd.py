@@ -44,8 +44,9 @@ class CMD(commands.Cog):
                                                                                              f'Организатор: {interaction.user.mention}', colour=0x5BF5D1))
                 db.insert("events", datetime=unix_event, name=event_name, organizer=interaction.user.id, message_id=event_message.id, info=info)
             elif channel.id == CHANNELS["Organizers"]:
-                await channel.send(f"<@{interaction.user.id}> создал событие", embed=Embed(title=event_name, description=f'На {schedule_event["day"]} {schedule_event["date"]} {schedule_event["month"]} в {schedule_event["time"]} по МСК.' + \
-                                                                                                                         f"\nС описанием по ссылке: {info}" if info else "", colour=0x21F300))
+                message = f'На {schedule_event["day"]} {schedule_event["date"]} {schedule_event["month"]} в {schedule_event["time"]} по МСК.\nС описанием по ссылке: {info}' if info else \
+                    f'На {schedule_event["day"]} {schedule_event["date"]} {schedule_event["month"]} в {schedule_event["time"]} по МСК.'
+                await channel.send(f"<@{interaction.user.id}> создал событие", embed=Embed(title=event_name, description=message, colour=0x21F300))
 
     @slash_command(name="remove", description="Отменить ивент", guild_ids=[GUILD_ID])
     async def remove(self, interaction: Interaction, event_name):
@@ -193,6 +194,9 @@ class CMD(commands.Cog):
         if event["organizer"] != interaction.user.id:
             await interaction.response.send_message(embed=Embed(title="❌Это не ваш ивент❌", colour=0xBF1818), ephemeral=True)
             return
+        if event["datetime"] - 30 < int(time()):
+            await interaction.response.send_message(embed=Embed(title="❌Ивент уже начался, его нельзя передать.❌", description="Если это сделать необходимо, то передайте права на голосовой канал другому организатору через внутренний функционал Discord", colour=0xBF1818), ephemeral=True)
+            return
         view = TakeEvent(interaction.user.id)
         await interaction.response.send_message("Передача...", ephemeral=True)
         m = await interaction.channel.send(f"{interaction.user.mention} передаёт свой ивент **{event_name}**. Чтобы взять ивент нажмите ниже.", view=view)
@@ -203,6 +207,47 @@ class CMD(commands.Cog):
             return
         db.update("events", f"name == '{event_name}'", organizer=view.user.id)
         await interaction.channel.send(embed=Embed(title=f"Ивент передан", description=f"{view.user.mention} становится организатором ивента **{event_name}**", colour=0x21F300))
+
+    @slash_command(name="newtime", description="Изменить время проведения ивента", guild_ids=[GUILD_ID])
+    async def newtime(self, interaction: Interaction, event_name):
+        if interaction.channel_id != CHANNELS["Organizers"]:
+            await interaction.response.send_message(embed=Embed(title="❌Wrong channel❌", colour=0xBF1818), ephemeral=True)
+            return
+        event = db.select("events", f"name == '{event_name}'")
+        if not event:
+            await interaction.response.send_message(embed=Embed(title="❌Такого ивента не существует❌", colour=0xBF1818), ephemeral=True)
+            return
+        if event["organizer"] != interaction.user.id:
+            await interaction.response.send_message(embed=Embed(title="❌Это не ваш ивент❌", colour=0xBF1818), ephemeral=True)
+            return
+        today = ctime(int(time())).split()
+        if today[0] in ("Sat", "Sun"):
+            block_date = (int(today[2])) if today[0] == "Sun" else (int(today[2]), int(today[2]) + 1)
+            if int(ctime(event["datetime"]).split()[2]) in block_date:
+                await interaction.response.send_message(embed=Embed(title="❌Невозможно удалить уже утверждённый ивент❌", description="Если Вы не можете провести ивент, то попросите это сделать кого-нибудь другого", colour=0xBF1818), ephemeral=True)
+                return
+
+        view = ChoiceDay()
+        await interaction.response.send_message("Выберите день проведения", ephemeral=True, view=view)
+        await view.wait()
+        if not view.time:
+            return
+
+        weekdays = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+        now_time = int(time())
+        if weekdays.index(ctime(now_time)[0:3]) > 4:
+            now_time += 172800
+        unix_event = ((now_time + 86400 * (view.day - (weekdays.index(ctime(now_time)[0:3]) + 1))) - [(h * 60 + m) * 60 + s for h, m, s in [list(map(int, ctime(now_time)[11:19].split(":")))]][0]) + (view.time * 60 * 60 if view.time < 100 else ((view.time // 10) * 60 + 30) * 60)
+        event = ctime(unix_event).split()
+        schedule_event = self.__getEventDetails(event)
+        for channel in interaction.guild.channels:
+            if channel.id == CHANNELS["Events_list"]:
+                event_message = await channel.fetch_message(event["message_id"])
+                await event_message.edit(embed=Embed(title=event_name, description=f'Запланировано на **{schedule_event["day"]} {schedule_event["date"]} {schedule_event["month"]}** в **{schedule_event["time"]}** по МСК.\n'
+                                                                                   f'Организатор: {interaction.user.mention}', colour=0x5BF5D1))
+                db.update("events", f"name == {event_name}", datetime=unix_event)
+            elif channel.id == CHANNELS["Organizers"]:
+                await channel.send(f"<@{interaction.user.id}> создал событие", embed=Embed(title=event_name, description=f"Перенесён на {schedule_event['day']} {schedule_event['date']} {schedule_event['month']} в {schedule_event['time']} по МСК.", colour=0x21F300))
 
     def __getEventDetails(self, event) -> dict:
         schedule_event = {}
