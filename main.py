@@ -96,11 +96,11 @@ class Bot(commands.Bot):
             await channel.purge()
             await channel.send(embed=Embed(title=sat[0], description="\n\n".join(sat[1::]), colour=0xF9BA1C))
             await channel.send(embed=Embed(title=sun[0], description="\n\n".join(sun[1::]), colour=0xF9BA1C))
-            kick_members = [f"<@{m['id']}>" for m in db.select("members", f"missed_events == 2", "id")]
+            kick_members = [f"<@{m['id']}>" if not m["organizer"] else "" for m in db.select("members", f"missed_events == 2", "id", "organizer")]
+            while "" in kick_members:
+                kick_members.remove("")
             if kick_members:
-                await channel.send(embed=Embed(title=sun[0],
-                                               description="**Следующие участники будут кикнуты с сервера в понедельник, если не будут участвовать в ивентах:**\n" + ", ".join(kick_members),
-                                               colour=0xF9BA1C))
+                await channel.send("**Следующие участники будут кикнуты с сервера в понедельник, если не будут участвовать в ивентах:**\n" + ", ".join(kick_members))
             voice = self.get_guild(GUILD_ID).get_channel(CHANNELS["Gazebo"])
             await voice.set_permissions(self.get_guild(GUILD_ID).get_role(ROLES["everyone"]), view_channel=True, speak=True, stream=True)
             db.update("bot_todo", "bot == 0", events_list=1)
