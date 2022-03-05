@@ -90,9 +90,9 @@ class Bot(commands.Bot):
             for event in events:
                 match ctime(event["datetime"])[0:3]:
                     case "Sat":
-                        sat.append(f"**{event['name']}** [Описание]({event['info']}) пройдёт в <t:{event['datetime']}:t>\nОрганизатор: <@{event['organizer']}>")
+                        sat.append(f"**{event['name']}** {'[Описание](' + event['info'] + ')' if event['info'] else ''} пройдёт в <t:{event['datetime']}:t>\nОрганизатор: <@{event['organizer']}>")
                     case "Sun":
-                        sun.append(f"**{event['name']}** [Описание]({event['info']}) пройдёт в <t:{event['datetime']}:t>\nОрганизатор: <@{event['organizer']}>")
+                        sun.append(f"**{event['name']}** {'[Описание](' + event['info'] + ')' if event['info'] else ''} пройдёт в <t:{event['datetime']}:t>\nОрганизатор: <@{event['organizer']}>")
             await channel.purge()
             await channel.send(embed=Embed(title=sat[0], description="\n\n".join(sat[1::]), colour=0xF9BA1C))
             await channel.send(embed=Embed(title=sun[0], description="\n\n".join(sun[1::]), colour=0xF9BA1C))
@@ -102,7 +102,7 @@ class Bot(commands.Bot):
                                                description="**Следующие участники будут кикнуты с сервера в понедельник, если не будут участвовать в ивентах:**\n" + ", ".join(kick_members),
                                                colour=0xF9BA1C))
             voice = self.get_guild(GUILD_ID).get_channel(CHANNELS["Gazebo"])
-            await voice.set_permissions(self.get_guild(GUILD_ID).get_role(ROLES["everyone"]), view_channel=True, speak=True, video=True)
+            await voice.set_permissions(self.get_guild(GUILD_ID).get_role(ROLES["everyone"]), view_channel=True, speak=True, stream=True)
             db.update("bot_todo", "bot == 0", events_list=1)
 
         events = db.select("events")
