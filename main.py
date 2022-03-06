@@ -106,6 +106,8 @@ class Bot(commands.Bot):
             db.update("bot_todo", "bot == 0", events_list=1)
 
         events = db.select("events")
+        if events is None:
+            return
         if type(events) == dict:
             events = [events]
         for event in events:
