@@ -63,6 +63,8 @@ class CMD(commands.Cog):
         today = ctime(int(time())).split()
         if today[0] in ("Sat", "Sun"):
             block_date = (int(today[2])) if today[0] == "Sun" else (int(today[2]), int(today[2]) + 1)
+            if not isinstance(block_date, tuple):
+                block_date = [block_date]
             if int(ctime(event["datetime"]).split()[2]) in block_date:
                 await interaction.response.send_message(embed=Embed(title="❌Невозможно удалить уже утверждённый ивент❌", description="Если Вы не можете провести ивент, то попросите это сделать кого-нибудь другого", colour=0xBF1818), ephemeral=True)
                 return
@@ -220,6 +222,8 @@ class CMD(commands.Cog):
         today = ctime(int(time())).split()
         if today[0] in ("Sat", "Sun"):
             block_date = (int(today[2])) if today[0] == "Sun" else (int(today[2]), int(today[2]) + 1)
+            if not isinstance(block_date, tuple):
+                block_date = [block_date]
             if int(ctime(event["datetime"]).split()[2]) in block_date:
                 await interaction.response.send_message(embed=Embed(title="❌Невозможно перенести уже утверждённый ивент❌", colour=0xBF1818), ephemeral=True)
                 return
